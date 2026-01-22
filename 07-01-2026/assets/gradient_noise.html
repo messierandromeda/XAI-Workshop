@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<style>
+
+    .gradient-viz-scope {
+        font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+        color: #e0e0e0;
+        background: linear-gradient(135deg, #0a0a1a 0%, #1a1a2e 50%, #16213e 100%);
+        padding: 40px 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        box-sizing: border-box;
+    }
+
+    .gradient-viz-scope * {
+        box-sizing: border-box;
+    }
+
+    .gradient-viz-scope .container {
+        max-width: 1400px;
+        width: 100%;
+        margin: 0 auto;
+    }
+
+    .gradient-viz-scope .header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    .gradient-viz-scope .title {
+        font-size: 36px;
+        font-weight: 300;
+        margin-bottom: 8px;
+        color: #64ffda;
+        letter-spacing: 4px;
+        text-transform: uppercase;
+    }
+
+    .gradient-viz-scope .subtitle {
+        font-size: 14px;
+        color: #888;
+        letter-spacing: 2px;
+        font-weight: 300;
+    }
+
+    .gradient-viz-scope .main-content {
+        display: flex;
+        gap: 30px;
+        align-items: flex-start;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .gradient-viz-scope .canvas-section {
+        display: flex;
+        flex-direction: column;
+        gap: 25px;
+    }
+
+    .gradient-viz-scope .canvas-label {
+        text-align: center;
+        font-size: 13px;
+        color: #64ffda;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin-bottom: 12px;
+        font-weight: 600;
+    }
+
+    .gradient-viz-canvas {
+        background: radial-gradient(circle at center, #0d0d1f 0%, #060610 100%);
+        border-radius: 12px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7),
+                    0 0 100px rgba(100, 255, 218, 0.1);
+        border: 1px solid rgba(100, 255, 218, 0.1);
+        display: block;
+    }
+
+    .gradient-viz-scope .control-panel {
+        background: rgba(20, 20, 35, 0.8);
+        border-radius: 12px;
+        padding: 25px;
+        border: 1px solid rgba(100, 255, 218, 0.15);
+        backdrop-filter: blur(10px);
+        min-width: 350px;
+        max-width: 350px;
+    }
+
+    .gradient-viz-scope .control-section {
+        margin-bottom: 25px;
+    }
+
+    .gradient-viz-scope .control-title {
+        font-size: 12px;
+        color: #64ffda;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin-bottom: 15px;
+        font-weight: 600;
+    }
+
+    .gradient-viz-scope .slider-container {
+        margin-bottom: 20px;
+    }
+
+    .gradient-viz-scope .slider-label {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-size: 13px;
+        color: #ccc;
+    }
+
+    .gradient-viz-scope .slider-value {
+        color: #fbbf24;
+        font-weight: 600;
+    }
+
+    .gradient-viz-scope input[type="range"] {
+        width: 100%;
+        height: 6px;
+        border-radius: 3px;
+        background: rgba(100, 255, 218, 0.1);
+        outline: none;
+        -webkit-appearance: none;
+    }
+
+    .gradient-viz-scope input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: #64ffda;
+        cursor: pointer;
+        box-shadow: 0 0 10px rgba(100, 255, 218, 0.5);
+    }
+
+    .gradient-viz-scope .legend {
+        background: rgba(20, 20, 35, 0.8);
+        border-radius: 12px;
+        padding: 20px;
+        border: 1px solid rgba(100, 255, 218, 0.15);
+        backdrop-filter: blur(10px);
+        margin-top: 20px;
+    }
+
+    .gradient-viz-scope .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+        font-size: 13px;
+    }
+
+    .gradient-viz-scope .color-line {
+        width: 30px;
+        height: 3px;
+        border-radius: 2px;
+    }
+
+    .gradient-viz-scope .formula {
+        background: rgba(100, 255, 218, 0.05);
+        border: 1px solid rgba(100, 255, 218, 0.2);
+        border-radius: 8px;
+        padding: 15px;
+        font-size: 13px;
+        line-height: 1.8;
+        color: #64ffda;
+        font-family: 'Courier New', monospace;
+        text-align: center;
+    }
+
+    .gradient-viz-scope .heatmap-container {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(100, 255, 218, 0.2);
+        border-radius: 8px;
+        padding: 15px;
+        min-height: 120px;
+        max-height: 280px;
+        overflow-y: auto;
+    }
+
+    .gradient-viz-scope .heatmap-sentence {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        font-size: 11px;
+        font-family: 'SF Mono', monospace;
+        line-height: 1.8;
+    }
+
+    .gradient-viz-scope .token {
+        padding: 2px 6px;
+        border-radius: 3px;
+        transition: all 0.3s ease;
+        display: inline-block;
+        white-space: nowrap;
+    }
+</style>
+
+<div class="gradient-viz-scope">
+    <div class="container">
+        <div class="header">
+            <div class="title">Noisy Gradients</div>
+            <div class="subtitle">How Noise Destabilizes First-Order Approximations</div>
+        </div>
+
+        <div class="main-content">
+            <div class="canvas-section">
+                <div>
+                    <div class="canvas-label">Neural Network Function f(x)</div>
+                    <canvas id="funcCanvas-viz" class="gradient-viz-canvas" width="900" height="350"></canvas>
+                </div>
+                <div>
+                    <div class="canvas-label">Gradient (Derivative) f'(x)</div>
+                    <canvas id="gradCanvas-viz" class="gradient-viz-canvas" width="900" height="350"></canvas>
+                </div>
+            </div>
+
+            <div>
+                <div class="control-panel">
+                    <div class="control-section">
+                        <div class="control-title">Noise Control</div>
+                        <div class="slider-container">
+                            <div class="slider-label">
+                                <span>Noise Level (σ)</span>
+                                <span class="slider-value" id="grad-noiseValue">0.00</span>
+                            </div>
+                            <input type="range" id="grad-noiseSlider" min="0" max="100" value="0" step="1">
+                        </div>
+                    </div>
+
+                    <div class="control-section">
+                        <div class="control-title">Taylor Expansion</div>
+                        <div class="formula">
+                            f(x + δ) ≈ f(x) + f'(x)·δ
+                            <div style="margin-top: 10px; font-size: 11px; color: #888;">
+                                First-order approximation
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="control-section">
+                        <div class="control-title">LLM Input Gradients</div>
+                        <div class="heatmap-container">
+                            <div class="heatmap-sentence-viz"></div>
+                        </div>
+                        <div style="font-size: 11px; color: #888; margin-top: 10px; text-align: center;">
+                            Without noise: only "Jordan" is highlighted (high gradient)<br>
+                            With noise: gradients become random and unstable
+                        </div>
+                    </div>
+                </div>
+
+                <div class="legend">
+                    <div class="control-title">Legend</div>
+                    <div class="legend-item">
+                        <div class="color-line" style="background: #64ffda; width: 40px;"></div>
+                        <span>Original Function/Gradient</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="color-line" style="background: #f472b6; width: 40px;"></div>
+                        <span>With Noise Added</span>
+                    </div>
+                    <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(100, 255, 218, 0.1); font-size: 11px; color: #888;">
+                        Drag the noise slider to see the effect on gradients
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // Use Scoped Selectors
+        const funcCanvas = document.getElementById('funcCanvas-viz');
+        const gradCanvas = document.getElementById('gradCanvas-viz');
+
+        // Guard clause to prevent errors if elements aren't found
+        if (!funcCanvas || !gradCanvas) return;
+
+        const funcCtx = funcCanvas.getContext('2d');
+        const gradCtx = gradCanvas.getContext('2d');
+
+        const noiseSlider = document.getElementById('grad-noiseSlider');
+        const noiseValue = document.getElementById('grad-noiseValue');
+        const heatmapContainer = document.querySelector('.heatmap-sentence-viz');
+
+        const width = funcCanvas.width;
+        const height = funcCanvas.height;
+        const padding = 50;
+        const plotWidth = width - 2 * padding;
+        const plotHeight = height - 2 * padding;
+
+        let noiseLevel = 0;
+        const numPoints = 800;
+
+        const tokens = [
+            'Context:', 'Medjool', 'dates', 'are', 'among', 'the', 'most', 'prized', 'varieties', 'of', 'dates,', 'known', 'for', 'their', 'large', 'size,', 'rich', 'flavor,', 'and', 'chewy', 'texture.', 'These', 'dates', 'thrive', 'in', 'hot,', 'arid', 'climates', 'with', 'long,', 'dry', 'summers', 'and', 'mild', 'winters,', 'making', 'regions', 'like', 'the', 'Jordan', 'Valley', 'in', 'Palestine', 'ideal', 'for', 'their', 'cultivation.', '[...]', 'Question:', 'Where', 'do', 'Medjool', 'dates', 'grow?', 'Answer:', 'Medjool', 'dates', 'grow', 'in', 'hot,', 'arid', 'regions', 'like', 'the', 'Jordan'
+        ];
+
+        const baseGradients = tokens.map((token) => {
+            if (token === 'Jordan') return 0.9;
+            return 0.1;
+        });
+
+        function neuralFunction(x) {
+            return Math.sin(x * 1.5) + 0.5 * Math.sin(x * 3) + 0.3 * Math.cos(x * 5);
+        }
+
+        function neuralDerivative(x) {
+            return 1.5 * Math.cos(x * 1.5) + 1.5 * Math.cos(x * 3) - 1.5 * Math.sin(x * 5);
+        }
+
+        function addNoise(value, sigma) {
+            if (sigma === 0) return value;
+            return value + (Math.random() - 0.5) * 2 * sigma;
+        }
+
+        function numericalGradient(x, sigma) {
+            const h = 0.05;
+            const f_x = addNoise(neuralFunction(x), sigma);
+            const f_x_h = addNoise(neuralFunction(x + h), sigma);
+            return (f_x_h - f_x) / h;
+        }
+
+        function drawAxes(ctx) {
+            ctx.strokeStyle = 'rgba(100, 100, 100, 0.3)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(padding, height / 2);
+            ctx.lineTo(width - padding, height / 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(padding, padding);
+            ctx.lineTo(padding, height - padding);
+            ctx.stroke();
+        }
+
+        function drawFunction() {
+            funcCtx.clearRect(0, 0, width, height);
+            drawAxes(funcCtx);
+            const xMin = -2 * Math.PI, xMax = 2 * Math.PI;
+            const yMin = -3, yMax = 3;
+
+            // Clean
+            funcCtx.strokeStyle = '#64ffda';
+            funcCtx.lineWidth = 2;
+            funcCtx.beginPath();
+            for (let i = 0; i < numPoints; i++) {
+                const x = xMin + (i / numPoints) * (xMax - xMin);
+                const y = neuralFunction(x);
+                const px = padding + (i / numPoints) * plotWidth;
+                const py = height / 2 - ((y - yMin) / (yMax - yMin) - 0.5) * plotHeight;
+                if (i === 0) funcCtx.moveTo(px, py); else funcCtx.lineTo(px, py);
+            }
+            funcCtx.stroke();
+
+            // Noisy
+            if (noiseLevel > 0) {
+                funcCtx.strokeStyle = '#f472b6';
+                funcCtx.beginPath();
+                for (let i = 0; i < numPoints; i++) {
+                    const x = xMin + (i / numPoints) * (xMax - xMin);
+                    const y = addNoise(neuralFunction(x), noiseLevel);
+                    const px = padding + (i / numPoints) * plotWidth;
+                    const py = height / 2 - ((y - yMin) / (yMax - yMin) - 0.5) * plotHeight;
+                    if (i === 0) funcCtx.moveTo(px, py); else funcCtx.lineTo(px, py);
+                }
+                funcCtx.stroke();
+            }
+        }
+
+        function drawGradient() {
+            gradCtx.clearRect(0, 0, width, height);
+            drawAxes(gradCtx);
+            const xMin = -2 * Math.PI, xMax = 2 * Math.PI;
+            const yMin = -5, yMax = 5;
+
+            // Clean
+            gradCtx.strokeStyle = '#64ffda';
+            gradCtx.lineWidth = 2;
+            gradCtx.beginPath();
+            for (let i = 0; i < numPoints; i++) {
+                const x = xMin + (i / numPoints) * (xMax - xMin);
+                const y = neuralDerivative(x);
+                const px = padding + (i / numPoints) * plotWidth;
+                const py = height / 2 - ((y - yMin) / (yMax - yMin) - 0.5) * plotHeight;
+                if (i === 0) gradCtx.moveTo(px, py); else gradCtx.lineTo(px, py);
+            }
+            gradCtx.stroke();
+
+            // Noisy
+            if (noiseLevel > 0) {
+                gradCtx.strokeStyle = '#f472b6';
+                gradCtx.beginPath();
+                for (let i = 0; i < numPoints; i++) {
+                    const x = xMin + (i / numPoints) * (xMax - xMin);
+                    const y = numericalGradient(x, noiseLevel);
+                    const px = padding + (i / numPoints) * plotWidth;
+                    const py = height / 2 - ((y - yMin) / (yMax - yMin) - 0.5) * plotHeight;
+                    if (i === 0) gradCtx.moveTo(px, py); else gradCtx.lineTo(px, py);
+                }
+                gradCtx.stroke();
+            }
+        }
+
+        function getHeatmapColor(value) {
+                const clamped = Math.max(0, Math.min(1, value));
+
+                if (clamped < 0.33) {
+                    const t = clamped / 0.33;
+                    return {
+                        r: Math.floor(30 * (1 - t) + 100 * t),
+                        g: Math.floor(64 * (1 - t) + 200 * t),
+                        b: Math.floor(175 * (1 - t) + 255 * t)
+                    };
+                } else if (clamped < 0.66) {
+                    const t = (clamped - 0.33) / 0.33;
+                    return {
+                        r: Math.floor(100 * (1 - t) + 220 * t),
+                        g: Math.floor(200 * (1 - t) + 38 * t),
+                        b: Math.floor(255 * (1 - t) + 38 * t)
+                    };
+                } else {
+                    const t = (clamped - 0.66) / 0.34;
+                    return {
+                        r: Math.floor(220 * (1 - t) + 251 * t),
+                        g: Math.floor(38 * (1 - t) + 191 * t),
+                        b: Math.floor(38 * (1 - t) + 36 * t)
+                    };
+                }
+            }
+
+
+        function updateHeatmap() {
+            if(!heatmapContainer) return;
+            heatmapContainer.innerHTML = '';
+            tokens.forEach((token, i) => {
+                const span = document.createElement('span');
+                span.className = 'token';
+                span.textContent = token;
+
+                let gradMag = baseGradients[i];
+                if (noiseLevel > 0) {
+                    gradMag += (Math.random() - 0.5) * noiseLevel * 3;
+                    gradMag = Math.max(0, Math.min(1, gradMag));
+                }
+
+                    const color = getHeatmapColor(gradMag);
+                    const alpha = 0.3 + gradMag * 0.5;
+                    span.style.backgroundColor = `rgba(${color.r}, ${color.g}, ${color.b}, ${alpha})`;
+                    span.style.color = gradMag > 0.6 ? '#000' : '#ddd';
+                    span.style.fontWeight = gradMag > 0.7 ? 'bold' : 'normal';
+
+                heatmapContainer.appendChild(span);
+            });
+        }
+
+        function update() {
+            drawFunction();
+            drawGradient();
+            updateHeatmap();
+        }
+
+        // Remove old listeners by cloning (simple trick for notebooks)
+        const newNoiseSlider = noiseSlider.cloneNode(true);
+        noiseSlider.parentNode.replaceChild(newNoiseSlider, noiseSlider);
+
+        newNoiseSlider.addEventListener('input', (e) => {
+            noiseLevel = parseFloat(e.target.value) / 30;
+            noiseValue.textContent = noiseLevel.toFixed(2);
+            update();
+        });
+
+        update();
+    })();
+</script>

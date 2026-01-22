@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attention Mechanism</title>
+    <style>
+
+        .attention-viz-wrapper {
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+            color: #e0e0e0;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a2e 50%, #16213e 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 800px; /* Changed from 100vh for notebook compatibility */
+            border-radius: 8px; /* Added rounded corners for neatness */
+        }
+
+
+        .attention-viz-wrapper .container {
+            max-width: 1400px;
+            width: 100%;
+        }
+
+        .attention-viz-wrapper .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .attention-viz-wrapper .title {
+            font-size: 32px;
+            font-weight: 300;
+            margin-bottom: 8px;
+            color: #64ffda;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+        }
+
+        .attention-viz-wrapper .subtitle {
+            font-size: 14px;
+            color: #888;
+            letter-spacing: 2px;
+            font-weight: 300;
+        }
+
+        .attention-viz-wrapper .main-content {
+            display: flex;
+            gap: 30px;
+            align-items: flex-start;
+            justify-content: center;
+        }
+
+        .attention-viz-wrapper .canvas-wrapper {
+            flex-shrink: 0;
+        }
+
+        #attention-canvas {
+            background: radial-gradient(circle at center, #0d0d1f 0%, #060610 100%);
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7),
+                        0 0 100px rgba(100, 255, 218, 0.1);
+            border: 1px solid rgba(100, 255, 218, 0.1);
+        }
+
+        .attention-viz-wrapper .info-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            min-width: 300px;
+        }
+
+        .attention-viz-wrapper .legend {
+            background: rgba(20, 20, 35, 0.8);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid rgba(100, 255, 218, 0.15);
+            backdrop-filter: blur(10px);
+        }
+
+        .attention-viz-wrapper .legend-title {
+            font-size: 12px;
+            color: #64ffda;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .attention-viz-wrapper .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+            font-size: 13px;
+        }
+
+        .attention-viz-wrapper .legend-icon {
+            width: 30px;
+            height: 2px;
+            flex-shrink: 0;
+        }
+
+        .key-color { background: #60a5fa; }
+        .query-color { background: #f472b6; }
+        .value-color {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #34d399;
+        }
+        .score-color { background: #fbbf24; }
+
+        .attention-viz-wrapper .softmax-panel {
+            background: rgba(20, 20, 35, 0.8);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid rgba(251, 191, 36, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .attention-viz-wrapper .softmax-title {
+            font-size: 12px;
+            color: #fbbf24;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .attention-viz-wrapper .softmax-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            gap: 10px;
+        }
+
+        .attention-viz-wrapper .softmax-label {
+            font-size: 11px;
+            color: #34d399;
+            min-width: 65px;
+            font-weight: 600;
+        }
+
+        .attention-viz-wrapper .softmax-bar-container {
+            flex: 1;
+            height: 24px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(251, 191, 36, 0.2);
+        }
+
+        .attention-viz-wrapper .softmax-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%);
+            border-radius: 12px;
+            transition: width 0.3s ease;
+            box-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+        }
+
+        .attention-viz-wrapper .softmax-value {
+            font-size: 12px;
+            color: #fbbf24;
+            min-width: 50px;
+            text-align: right;
+            font-weight: 600;
+        }
+
+        .attention-viz-wrapper .formula {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(100, 255, 218, 0.1);
+            font-size: 11px;
+            color: #888;
+            text-align: center;
+            font-style: italic;
+        }
+
+        @media (max-width: 1200px) {
+            .attention-viz-wrapper .main-content {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="attention-viz-wrapper">
+        <div class="container">
+            <div class="header">
+                <div class="title">Attention Mechanism</div>
+                <div class="subtitle">Self-Attention Visualization</div>
+            </div>
+
+            <div class="main-content">
+                <div class="canvas-wrapper">
+                    <canvas id="attention-canvas" width="700" height="700"></canvas>
+                </div>
+
+                <div class="info-panel">
+                    <div class="legend">
+                        <div class="legend-title">Components</div>
+                        <div class="legend-item">
+                            <div class="legend-icon key-color"></div>
+                            <span>Key Vectors (Countries)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-icon query-color"></div>
+                            <span>Query Vector (Click to move)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="value-color"></div>
+                            <span>Values (Capitals)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-icon score-color"></div>
+                            <span>Attention Scores (Q·K)</span>
+                        </div>
+                        <div class="formula">
+                            Attention(Q,K,V) = softmax(Q·K)V
+                        </div>
+                    </div>
+
+                    <div class="softmax-panel">
+                        <div class="softmax-title">Softmax Probabilities</div>
+                        <div id="softmax-bars"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Updated to target the new unique ID
+        const canvas = document.getElementById('attention-canvas');
+        const ctx = canvas.getContext('2d');
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const scale = 130;
+
+        // Key vectors with associated values
+        const keys = [
+            { x: 1.6, y: 1.3, value: 'Berlin', country: 'Germany', color: '#60a5fa' },
+            { x: -0.9, y: 1.9, value: 'Paris', country: 'France', color: '#60a5fa' },
+            { x: -1.7, y: -0.6, value: 'Beijing', country: 'China', color: '#60a5fa' },
+            { x: 0.4, y: -1.8, value: 'Rabat', country: 'Morocco', color: '#60a5fa' },
+            { x: 1.3, y: -1.0, value: 'Taipei', country: 'Taiwan', color: '#60a5fa' }
+        ];
+
+        // Query vector
+        let query = { x: 1.5, y: 1.1 };
+        let targetQuery = { x: 1.5, y: 1.1 };
+        const smoothing = 0.1;
+
+        function dotProduct(v1, v2) {
+            return v1.x * v2.x + v1.y * v2.y;
+        }
+
+        function magnitude(v) {
+            return Math.sqrt(v.x * v.x + v.y * v.y);
+        }
+
+        function softmax(scores) {
+            const maxScore = Math.max(...scores);
+            const expScores = scores.map(s => Math.exp(s - maxScore));
+            const sumExp = expScores.reduce((a, b) => a + b, 0);
+            return expScores.map(e => e / sumExp);
+        }
+
+        function drawVector(x, y, color, width = 3, country = '', capital = '', isQuery = false) {
+            const endX = centerX + x * scale;
+            const endY = centerY - y * scale;
+
+            if (isQuery) {
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = color;
+            }
+
+            ctx.strokeStyle = color;
+            ctx.lineWidth = width;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(endX, endY);
+            ctx.stroke();
+
+            ctx.shadowBlur = 0;
+
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(endX, endY, 6, 0, Math.PI * 2);
+            ctx.fill();
+
+            if (country) {
+                ctx.fillStyle = '#60a5fa';
+                ctx.font = 'bold 14px SF Mono, monospace';
+                ctx.shadowBlur = 5;
+                ctx.shadowColor = '#60a5fa';
+                ctx.fillText(country, endX + 18, endY - 12);
+                ctx.shadowBlur = 0;
+
+                ctx.fillStyle = '#34d399';
+                ctx.font = '12px SF Mono, monospace';
+                ctx.shadowBlur = 5;
+                ctx.shadowColor = '#34d399';
+                ctx.fillText(`→ ${capital}`, endX + 18, endY + 5);
+                ctx.shadowBlur = 0;
+            }
+        }
+
+        function drawDotProductLines(scores, softmaxScores) {
+            const maxScore = Math.max(...scores);
+
+            keys.forEach((key, i) => {
+                if (scores[i] > 0) {
+                    const opacity = softmaxScores[i] * 0.8;
+                    const isMax = scores[i] === maxScore;
+
+                    ctx.strokeStyle = `rgba(251, 191, 36, ${opacity})`;
+                    ctx.lineWidth = isMax ? 2 : 1;
+                    ctx.setLineDash(isMax ? [] : [5, 5]);
+                    ctx.beginPath();
+                    ctx.moveTo(centerX + query.x * scale, centerY - query.y * scale);
+                    ctx.lineTo(centerX + key.x * scale, centerY - key.y * scale);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
+            });
+        }
+
+        function drawScores(scores, softmaxScores) {
+            const maxScore = Math.max(...scores);
+
+            keys.forEach((key, i) => {
+                const endX = centerX + key.x * scale;
+                const endY = centerY - key.y * scale;
+
+                const isMax = scores[i] === maxScore;
+                const alpha = 0.4 + softmaxScores[i] * 0.6;
+
+                ctx.fillStyle = `rgba(251, 191, 36, ${alpha})`;
+                ctx.font = isMax ? 'bold 13px SF Mono' : '11px SF Mono';
+                ctx.fillText(scores[i].toFixed(2), endX + 18, endY + 28);
+
+                if (isMax) {
+                    ctx.strokeStyle = `rgba(251, 191, 36, ${0.3 + Math.sin(Date.now() / 500) * 0.2})`;
+                    ctx.lineWidth = 2.5;
+                    ctx.beginPath();
+                    ctx.arc(endX, endY, 38, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+            });
+        }
+
+        function drawAxes() {
+            ctx.strokeStyle = 'rgba(100, 100, 100, 0.15)';
+            ctx.lineWidth = 1;
+
+            ctx.beginPath();
+            ctx.moveTo(0, centerY);
+            ctx.lineTo(canvas.width, centerY);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(centerX, 0);
+            ctx.lineTo(centerX, canvas.height);
+            ctx.stroke();
+
+            ctx.strokeStyle = 'rgba(100, 100, 100, 0.08)';
+            ctx.setLineDash([2, 6]);
+            for (let i = -2; i <= 2; i++) {
+                if (i !== 0) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, centerY - i * scale);
+                    ctx.lineTo(canvas.width, centerY - i * scale);
+                    ctx.stroke();
+
+                    ctx.beginPath();
+                    ctx.moveTo(centerX + i * scale, 0);
+                    ctx.lineTo(centerX + i * scale, canvas.height);
+                    ctx.stroke();
+                }
+            }
+            ctx.setLineDash([]);
+        }
+
+        function updateSoftmaxBars(softmaxScores) {
+            const container = document.getElementById('softmax-bars');
+            container.innerHTML = '';
+
+            keys.forEach((key, i) => {
+                const item = document.createElement('div');
+                item.className = 'softmax-item';
+
+                const label = document.createElement('div');
+                label.className = 'softmax-label';
+                label.textContent = key.country;
+
+                const barContainer = document.createElement('div');
+                barContainer.className = 'softmax-bar-container';
+
+                const bar = document.createElement('div');
+                bar.className = 'softmax-bar';
+                bar.style.width = `${softmaxScores[i] * 100}%`;
+
+                const value = document.createElement('div');
+                value.className = 'softmax-value';
+                value.textContent = `${(softmaxScores[i] * 100).toFixed(1)}%`;
+
+                barContainer.appendChild(bar);
+                item.appendChild(label);
+                item.appendChild(barContainer);
+                item.appendChild(value);
+                container.appendChild(item);
+            });
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            drawAxes();
+
+            query.x += (targetQuery.x - query.x) * smoothing;
+            query.y += (targetQuery.y - query.y) * smoothing;
+
+            const scores = keys.map(key => dotProduct(query, key));
+            const softmaxScores = softmax(scores);
+
+            drawDotProductLines(scores, softmaxScores);
+
+            keys.forEach(key => {
+                drawVector(key.x, key.y, key.color, 3.5, key.country, key.value);
+            });
+
+            drawVector(query.x, query.y, '#f472b6', 4.5, '', true);
+
+            drawScores(scores, softmaxScores);
+
+            updateSoftmaxBars(softmaxScores);
+
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#fff';
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+
+            requestAnimationFrame(animate);
+        }
+
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            targetQuery.x = (mouseX - centerX) / scale;
+            targetQuery.y = -(mouseY - centerY) / scale;
+
+            const mag = magnitude(targetQuery);
+            if (mag > 2.5) {
+                targetQuery.x = (targetQuery.x / mag) * 2.5;
+                targetQuery.y = (targetQuery.y / mag) * 2.5;
+            }
+        });
+
+        animate();
+    </script>
+</body>
+</html>
