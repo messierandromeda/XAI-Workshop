@@ -1,4 +1,4 @@
-# XAI-Workshop
+# AI Workshops
 Code from the explainable AI workshop organized by Bliss and Dida (7. and 21. January 2026) \
 **Sources:** \
 [07.01 - Opening the Black Box with LRP: A Hands-on Guide to Explainable AI for LLMs](https://github.com/antonsegeler/xai4llms) \
